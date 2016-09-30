@@ -33,13 +33,14 @@ use think\paginator\Collection as PaginatorCollection;
  * @method mixed find(mixed $data = []) static 查询单个记录
  * @method mixed select(mixed $data = []) static 查询多个记录
  * @method integer insert(array $data, boolean $replace = false, boolean $getLastInsID = false, string $sequence = null) static 插入一条记录
+ * @method integer insertGetId(array $data, boolean $replace = false, string $sequence = null) static 插入一条记录并返回自增ID
  * @method integer insertAll(array $dataSet) static 插入多条记录
  * @method integer update(array $data) static 更新记录
  * @method integer delete(mixed $data = []) static 删除记录
  * @method boolean chunk(integer $count, callable $callback, string $column = null) static 分块获取数据
  * @method mixed query(string $sql, array $bind = [], boolean $fetch = false, boolean $master = false, mixed $class = false) static SQL查询
  * @method integer execute(string $sql, array $bind = [], boolean $fetch = false, boolean $getLastInsID = false, string $sequence = null) static SQL执行
- * @method PaginatorCollection paginate(integer $listRows = 15, boolean $simple = false, array $config = []) static 分页查询
+ * @method PaginatorCollection paginate(integer $listRows = 15, mixed $simple = false, array $config = []) static 分页查询
  * @method mixed transaction(callable $callback) static 执行数据库事务
  * @method boolean batchQuery(array $sqlArray) static 批处理执行SQL语句
  */
@@ -74,7 +75,9 @@ class Db
             }
             $class = false !== strpos($options['type'], '\\') ? $options['type'] : '\\think\\db\\connector\\' . ucwords($options['type']);
             // 记录初始化信息
-            App::$debug && Log::record('[ DB ] INIT ' . $options['type'] . ':' . var_export($options, true), 'info');
+            if (App::$debug) {
+                Log::record('[ DB ] INIT ' . $options['type'], 'info');
+            }
             if (true === $name) {
                 return new $class($options);
             } else {

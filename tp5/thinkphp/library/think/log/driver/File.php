@@ -58,7 +58,7 @@ class File
         }
 
         $runtime    = number_format(microtime(true) - THINK_START_TIME, 10);
-        $reqs       = number_format(1 / $runtime, 2);
+        $reqs       = $runtime > 0 ? number_format(1 / $runtime, 2) : '∞';
         $time_str   = ' [运行时间：' . number_format($runtime, 6) . 's][吞吐率：' . $reqs . 'req/s]';
         $memory_use = number_format((memory_get_usage() - THINK_START_MEM) / 1024, 2);
         $memory_str = ' [内存消耗：' . $memory_use . 'kb]';
@@ -79,13 +79,13 @@ class File
             }
             if (in_array($type, $this->config['apart_level'])) {
                 // 独立记录的日志级别
-                $filename = $path . DS . $type . '.log';
-                error_log("[{$now}] {$server} {$remote} {$method} {$uri}\r\n{$level}\r\n", 3, $filename);
+                $filename = $path . DS . date('d') . '_' . $type . '.log';
+                error_log("[{$now}] {$server} {$remote} {$method} {$uri}\r\n{$level}\r\n---------------------------------------------------------------\r\n", 3, $filename);
             } else {
                 $info .= $level;
             }
         }
-        return error_log("[{$now}] {$server} {$remote} {$method} {$uri}\r\n{$info}\r\n", 3, $destination);
+        return error_log("[{$now}] {$server} {$remote} {$method} {$uri}\r\n{$info}\r\n---------------------------------------------------------------\r\n", 3, $destination);
     }
 
 }

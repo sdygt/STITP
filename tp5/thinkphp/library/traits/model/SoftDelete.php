@@ -12,7 +12,8 @@ trait SoftDelete
      */
     public function trashed()
     {
-        if (!empty($this->data[static::$deleteTime])) {
+        $field = $this->getDeleteTimeField();
+        if (!empty($this->data[$field])) {
             return true;
         }
         return false;
@@ -37,7 +38,8 @@ trait SoftDelete
     public static function onlyTrashed()
     {
         $model = new static();
-        return $model->db()->where(static::$deleteTime, '>', 0);
+        $field = $model->getDeleteTimeField();
+        return $model->db()->where($field, 'exp', 'is not null');
     }
 
     /**
@@ -51,10 +53,9 @@ trait SoftDelete
         if (false === $this->trigger('before_delete', $this)) {
             return false;
         }
-
-        if (static::$deleteTime && !$force) {
+        $name = $this->getDeleteTimeField();
+        if (!$force) {
             // 软删除
-            $name              = static::$deleteTime;
             $this->change[]    = $name;
             $this->data[$name] = $this->autoWriteTimestamp($name);
             $result            = $this->isUpdate()->save();
@@ -83,7 +84,10 @@ trait SoftDelete
         } elseif ($data instanceof \Closure) {
             call_user_func_array($data, [ & $query]);
             $data = null;
+        } elseif (is_null($data)) {
+            return 0;
         }
+
         $resultSet = $query->select($data);
         $count     = 0;
         if ($resultSet) {
@@ -98,28 +102,45 @@ trait SoftDelete
     /**
      * 恢复被软删除的记录
      * @access public
+     * @param array $where 更新条件
      * @return integer
      */
-    public function restore()
+    public function restore($where = [])
     {
-        if (static::$deleteTime) {
-            // 恢复删除
-            $this->setAttr(static::$deleteTime, 0);
-            return $this->isUpdate()->save();
-        }
-        return false;
+        $name = $this->getDeleteTimeField();
+        // 恢复删除
+        return $this->isUpdate()->save([$name => null], $where);
+
     }
 
     /**
      * 查询默认不包含软删除数据
      * @access protected
+     * @param \think\db\Query $query 查询对象
      * @return void
      */
-    protected static function base($query)
+    protected function base($query)
     {
-        if (static::$deleteTime) {
-            $query->where(static::$deleteTime, 0);
-        }
+        $field = $this->getDeleteTimeField(true);
+        $query->where($field, 'null');
     }
 
+    /**
+     * 获取软删除字段
+     * @access public
+     * @param bool  $read 是否查询操作 写操作的时候会自动去掉表别名
+     * @return string
+     */
+    protected function getDeleteTimeField($read = false)
+    {
+        if (isset($this->deleteTime)) {
+            $field = $this->deleteTime;
+        } else {
+            $field = 'delete_time';
+        }
+        if (!$read && strpos($field, '.')) {
+            list($alias, $field) = explode('.', $field);
+        }
+        return $field;
+    }
 }

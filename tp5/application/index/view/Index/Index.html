@@ -10,45 +10,42 @@
 </head>
 
 <body>
-    <h1>标题</h1>
-    <p>一些介绍</p>
-    <form id="form" enctype="multipart/form-data">
-        <input type="radio" name="arg_d" value="Bwd" checked><span class="radioLabel">Bwd</span>
-        <input type="radio" name="arg_d" value="Fwd"><span class="radioLabel">Fwd</span>
-        <input type="radio" name="arg_d" value="Both"><span class="radioLabel">Both</span>
-        <br />
-        <input type="radio" name="arg_m" value="Symbolic" checked><span class="radioLabel">Symbolic</span>
-        <input type="radio" name="arg_m" value="Weiser"><span class="radioLabel">Weiser</span>
-        <input type="radio" name="arg_m" value="SDG"><span class="radioLabel">SDG</span>
-        <input type="radio" name="arg_m" value="IFDS"><span class="radioLabel">IFDS</span>
-        <input type="file" id="file" name="sourcecode">
+<h1>标题</h1>
+<p>一些介绍</p>
+<form id="form" enctype="multipart/form-data">
+    <input type="radio" name="arg_d" value="Bwd" checked><span class="radioLabel">Bwd</span>
+    <input type="radio" name="arg_d" value="Fwd"><span class="radioLabel">Fwd</span>
+    <input type="radio" name="arg_d" value="Both"><span class="radioLabel">Both</span>
+    <br />
+    <input type="radio" name="arg_m" value="Symbolic" checked><span class="radioLabel">Symbolic</span>
+    <input type="radio" name="arg_m" value="Weiser"><span class="radioLabel">Weiser</span>
+    <input type="radio" name="arg_m" value="SDG"><span class="radioLabel">SDG</span>
+    <input type="radio" name="arg_m" value="IFDS"><span class="radioLabel">IFDS</span>
+    <input type="file" id="file" name="sourcecode">
 
-    </form>
-    <button id="btnSubmit">提交</button>
-    <script>
-        //    var arg_d = $("input[name='arg_d']:checked").val();
-
-
-        $('#btnSubmit').click(function() {
-            var data = new FormData();
-            jQuery.each(jQuery('#file')[0].files, function(i, file) {
-                data.append('file-' + i, file);
-            });
-            data.append('arg_d', $("[name='arg_d']").val());
-            data.append('arg_m', $("[name='arg_m']").val());
-            $.ajax({
-                url: '', //TODO:填入提交地址
-                data: data,
-                cache: false,
-                contentType: false,
-                processData: false,
-                type: 'POST',
-                success: function(data) {
-                    console.info(data);
-                }
-            });
+</form>
+<button id="btnSubmit">提交</button>
+<script>
+    $('#btnSubmit').click(function () {
+        var data = new FormData();
+        jQuery.each(jQuery('#file')[0].files, function (i, file) {
+            data.append('file-' + i, file);
         });
-    </script>
+        data.append('arg_d', $("[name='arg_d']").val());
+        data.append('arg_m', $("[name='arg_m']").val());
+        $.ajax({
+            url: '{:url("Index/Mock/AllVarAnalyze")}', //TODO:填入提交地址
+            data: data,
+            cache: false,
+            contentType: false,
+            processData: false,
+            type: 'POST',
+            success: function (data) {
+                console.info(data);
+            }
+        });
+    });
+</script>
 </body>
 
 </html>

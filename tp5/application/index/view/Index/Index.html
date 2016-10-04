@@ -25,23 +25,53 @@
 
 </form>
 <button id="btnSubmit">提交</button>
+<button id="btnSynChk">Check Syntax</button>
+<div id="stdout"></div>
 <script>
     $('#btnSubmit').click(function () {
         var data = new FormData();
         jQuery.each(jQuery('#file')[0].files, function (i, file) {
             data.append('file-' + i, file);
         });
-        data.append('arg_d', $("[name='arg_d']").val());
-        data.append('arg_m', $("[name='arg_m']").val());
+        data.append('arg_d', $("input[name='arg_d']:checked").val());
+        data.append('arg_m', $("input[name='arg_m']:checked").val());
         $.ajax({
-            url: '{:url("Index/Mock/AllVarAnalyze")}', //TODO:填入提交地址
+            url: '{:url("Api/Phpapi/LLVMSlice")}',
             data: data,
             cache: false,
             contentType: false,
             processData: false,
             type: 'POST',
             success: function (data) {
-                console.info(data);
+                console.log(data);
+                if (data.code == 0) {
+                    $('#stdout').html('<pre>' + data.data + '</pre>');
+                } else {
+                    alert('error');
+                }
+            }
+        });
+    });
+
+    $('#btnSynChk').click(function () {
+        var data = new FormData();
+        jQuery.each(jQuery('#file')[0].files, function (i, file) {
+            data.append('file-' + i, file);
+        });
+        $.ajax({
+            url: '{:url("Api/Phpapi/CheckSyntax")}',
+            data: data,
+            cache: false,
+            contentType: false,
+            processData: false,
+            type: 'POST',
+            success: function (data) {
+                console.log(data);
+                if (data.status === true) {
+                    $('#stdout').html('<pre>' + data.message + '</pre>');
+                } else {
+                    alert('error');
+                }
             }
         });
     });

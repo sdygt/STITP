@@ -1,0 +1,12 @@
+{
+    "name": "stitp-node",
+    "version": "0.0.1",
+    "private": true,
+    "dependencies": {
+        "graphlib": "^2.1.1",
+        "graphlib-dot": "^0.6.2"
+    },
+    "scripts": {
+        "start": "pm2 start server.js"
+    }
+}

@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <title>首页|欢迎页</title>
-    <link rel="stylesheet" href="http://cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
-    <script src="http://cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
-    <script src="http://cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <script src="//cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
+    <script src="//cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 </head>
 
 <body>
@@ -52,7 +52,7 @@
         data.append('arg_d', $("input[name='arg_d']:checked").val());
         data.append('arg_m', $("input[name='arg_m']:checked").val());
         $.ajax({
-            url: '{:url("Api/Phpapi/LLVMSlice")}',
+            url: '{:url("Api/Phpapi/LLVMSlice_All")}',
             data: data,
             cache: false,
             contentType: false,

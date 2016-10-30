@@ -9,6 +9,7 @@
 namespace app\api\controller;
 
 
+use app\api\controller\Parser\Parser;
 use think\Controller;
 
 
@@ -21,7 +22,7 @@ class phpapi extends Controller
         if ($file) {
             $info = $file->rule(function ($file) {
                 return substr($file->hash('md5'), 0, 8) . '_' . preg_replace('/\h+/', '_', $file->getInfo('name'));
-            })->move(ROOT_PATH . 'runtime' . DS . 'uploads');
+            })->move('/tmp' . DS . 'stitp');
             $pathname = $info->getPathname();
         } else {
             return ['status' => false];
@@ -37,7 +38,7 @@ class phpapi extends Controller
         }
     }
 
-    public function LLVMSlice()
+    public function LLVMSlice_All()
     {
         $arg_m = input('post.arg_m');
         $arg_d = input('post.arg_d');
@@ -53,7 +54,7 @@ class phpapi extends Controller
         if ($file) {
             $info = $file->rule(function ($file) {
                 return substr($file->hash('md5'), 0, 8) . '_' . preg_replace('/\h+/', '_', $file->getInfo('name'));
-            })->move(ROOT_PATH . 'runtime' . DS . 'uploads');
+            })->move('/tmp' . DS . 'stitp');
             $pathname = $info->getPathname();
         } else {
             return ['status' => false];
@@ -65,7 +66,10 @@ class phpapi extends Controller
 
         passthru($cmdline, $ret);
         $stdout = ob_get_clean();
-        $this->result($stdout, $ret, 'success');
+        $result_json = Parser::AllVarParser($stdout, $arg_d);
+        $this->result($result_json, $ret, 'success');
 
     }
+
+
 }

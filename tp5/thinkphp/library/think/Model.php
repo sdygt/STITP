@@ -147,9 +147,10 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
     /**
      * 获取当前模型的数据库查询对象
      * @access public
+     * @param bool $baseQuery 是否调用全局查询范围
      * @return Query
      */
-    public function db()
+    public function db($baseQuery = true)
     {
         $model = $this->class;
         if (!isset(self::$links[$model])) {
@@ -168,6 +169,10 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
             }
 
             self::$links[$model] = $query;
+        }
+        // 全局作用域
+        if ($baseQuery && method_exists($this, 'base')) {
+            call_user_func_array([$this, 'base'], [ & self::$links[$model]]);
         }
         // 返回当前模型的数据库查询对象
         return self::$links[$model];
@@ -644,7 +649,7 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
         if (false === $this->trigger('before_write', $this)) {
             return false;
         }
-
+        $pk = $this->getPk();
         if ($this->isUpdate) {
             // 自动更新
             $this->autoCompleteData($this->update);
@@ -675,15 +680,12 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
                 $where = $this->updateWhere;
             }
 
-            if (!empty($where)) {
-                $pk = $this->getPk();
-                if (is_string($pk) && isset($data[$pk])) {
-                    if (!isset($where[$pk])) {
-                        unset($where);
-                        $where[$pk] = $data[$pk];
-                    }
-                    unset($data[$pk]);
+            if (is_string($pk) && isset($data[$pk])) {
+                if (!isset($where[$pk])) {
+                    unset($where);
+                    $where[$pk] = $data[$pk];
                 }
+                unset($data[$pk]);
             }
 
             $result = $this->db()->where($where)->update($data);
@@ -707,10 +709,9 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
             $result = $this->db()->insert($this->data);
 
             // 获取自动增长主键
-            if ($result) {
+            if ($result && is_string($pk) && !isset($this->data[$pk])) {
                 $insertId = $this->db()->getLastInsID($sequence);
-                $pk       = $this->getPk();
-                if (is_string($pk) && $insertId) {
+                if ($insertId) {
                     $this->data[$pk] = $insertId;
                 }
             }
@@ -1141,8 +1142,9 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
                     ->join($table . ' b', 'a.' . $info['localKey'] . '=b.' . $info['foreignKey'], $info['joinType'])
                     ->group('b.' . $info['foreignKey'])
                     ->having('count(' . $id . ')' . $operator . $count);
-            case Relation::HAS_MANY_THROUGH:
-                // TODO
+            case Relation::HAS_MANY_THROUGH: // TODO
+            default:
+                return $model;
         }
     }
 
@@ -1173,8 +1175,9 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
                     ->field('a.*')
                     ->join($table . ' b', 'a.' . $info['localKey'] . '=b.' . $info['foreignKey'], $info['joinType'])
                     ->where($where);
-            case Relation::HAS_MANY_THROUGH:
-                // TODO
+            case Relation::HAS_MANY_THROUGH: // TODO
+            default:
+                return $model;
         }
     }
 
@@ -1340,8 +1343,6 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
     public function __call($method, $args)
     {
         $query = $this->db();
-        // 全局作用域
-        $this->baseQuery($query);
         if (method_exists($this, 'scope' . $method)) {
             // 动态调用命名范围
             $method = 'scope' . $method;
@@ -1356,18 +1357,7 @@ abstract class Model implements \JsonSerializable, \ArrayAccess
     public static function __callStatic($method, $params)
     {
         $query = self::getDb();
-        $model = new static();
-        // 全局作用域
-        $model->baseQuery($query);
         return call_user_func_array([$query, $method], $params);
-    }
-
-    public function baseQuery(&$query)
-    {
-        // 全局作用域
-        if ($this->useGlobalScope && method_exists($this, 'base')) {
-            call_user_func_array([$this, 'base'], [ & $query]);
-        }
     }
 
     protected static function getDb()

@@ -11,40 +11,41 @@
 
 <body>
 <div class="container">
-<div class="jumbotron">
-	<div class="page-header">
-		<h1>标题
-			<small>一些介绍</small>
-		</h1>
-	</div>
+    <div class="jumbotron">
+        <div class="page-header">
+            <h2>在线程序切片系统
+                <small>大学生创新创业训练计划项目</small>
+            </h2>
+        </div>
 
-	<form id="form" enctype="multipart/form-data" role="form">
-		<div class="form-group">
-			<div class="radio">
-				<label><input type="radio" name="arg_d" value="Bwd" checked>Bwd</label>
-				<label><input type="radio" name="arg_d" value="Fwd">Fwd</label>
-				<label><input type="radio" name="arg_d" value="Both">Both</label>
-			</div>
-		</div>
-		
-		<div class="form-group">
-			<div class="radio">
-				<label><input type="radio" name="arg_m" value="Symbolic" checked>Symbolic</label>
-				<label><input type="radio" name="arg_m" value="Weiser">Weiser</label>
-				<label><input type="radio" name="arg_m" value="SDG">SDG</label>
-				<label><input type="radio" name="arg_m" value="IFDS">IFDS</label>
-				<input type="file" id="file" name="sourcecode">
-			</div>
-		</div>
+        <form id="form" enctype="multipart/form-data" role="form">
+            <p>切片方向</p>
+            <div class="btn-group" data-toggle="buttons">
+                <label class="btn btn-primary active"><input type="radio" name="arg_d" value="Bwd" checked>后向</label>
+                <label class="btn btn-primary"><input type="radio" name="arg_d" value="Fwd">前向</label>
+                <label class="btn btn-primary"><input type="radio" name="arg_d" value="Both">双向</label>
+            </div>
+            <p>切片方法</p>
+            <div class="btn-group" data-toggle="buttons">
+                <label class="btn btn-primary active"><input type="radio" name="arg_m" value="Symbolic" checked>Symbolic</label>
+                <label class="btn btn-primary"><input type="radio" name="arg_m" value="Weiser">Weiser</label>
+                <label class="btn btn-primary"><input type="radio" name="arg_m" value="SDG">SDG</label>
+                <label class="btn btn-primary"><input type="radio" name="arg_m" value="IFDS">IFDS</label>
 
-	</form>
-	<button id="btnSubmit" type="button" class="btn btn-primary">提交</button>
-	<button id="btnSynChk" type="button" class="btn btn-primary">Check Syntax</button>
-	<div id="stdout"></div>
-</div>
+            </div>
+            <input type="file" id="file" name="sourcecode">
+        </form>
+        <div>
+            <pre id="stdout">选择文件并提交</pre>
+        </div>
+        <button id="btnSubmit" type="button" class="btn btn-primary" data-loading-text="正在处理">提交</button>
+        <button id="btnSynChk" type="button" class="btn btn-primary" data-loading-text="正在处理">代码语法检查</button>
+
+    </div>
 </div>
 <script>
     $('#btnSubmit').click(function () {
+        var btn = $(this).button('loading');
         var data = new FormData();
         jQuery.each(jQuery('#file')[0].files, function (i, file) {
             data.append('file-' + i, file);
@@ -60,16 +61,18 @@
             type: 'POST',
             success: function (data) {
                 console.log(data);
+                btn.button('reset');
                 if (data.code == 0) {
-                    $('#stdout').html('<pre>' + data.data + '</pre>');
+                    $('#stdout').html(data.data);
                 } else {
-                    alert('error');
+                    alert('Error occurred, see console for details.');
                 }
             }
         });
     });
 
     $('#btnSynChk').click(function () {
+        var btn = $(this).button('loading');
         var data = new FormData();
         jQuery.each(jQuery('#file')[0].files, function (i, file) {
             data.append('file-' + i, file);
@@ -83,11 +86,8 @@
             type: 'POST',
             success: function (data) {
                 console.log(data);
-                if (data.status === true) {
-                    $('#stdout').html('<pre>' + data.message + '</pre>');
-                } else {
-                    alert('error');
-                }
+                btn.button('reset');
+                $('#stdout').html(data.message);
             }
         });
     });

@@ -94,8 +94,36 @@ class Parser extends Controller
         $arrTable_bwd = self::ParseTable($arrTable_bwd);
         $arrTable_fwd = self::ParseTable($arrTable_fwd);
 
-        return ["Bwd"=>$arrTable_bwd,"Fwd"=>$arrTable_fwd];
+        return ["Bwd" => $arrTable_bwd, "Fwd" => $arrTable_fwd];
 
+    }
+
+    public static function SingleVarParser($stdout, $arg_d)
+    {
+        switch ($arg_d) {
+            case 'Fwd':
+                //no break
+            case 'Bwd':
+                return self::SingleVarParser_1d($stdout);
+                break;
+            case 'Both':
+                return self::SingleVarParser_2d($stdout);
+                break;
+        }
+    }
+
+    private static function SingleVarParser_1d($stdout)
+    {
+        preg_match('/(?<=]:)(.*)(?=Its some statistic Info.:)/sm', $stdout, $ir);
+        $ir = trim($ir[0]);
+        return $ir;
+    }
+
+    private static function SingleVarParser_2d($stdout)
+    {
+        preg_match('/(Backward)(.*)(?=Its some statistic Info.:)/sm', $stdout, $ir);
+        $ir = trim($ir[0]);
+        return $ir;
     }
 
 

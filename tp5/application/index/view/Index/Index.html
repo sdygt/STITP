@@ -45,15 +45,22 @@
 </div>
 <script>
     $('#btnSubmit').click(function () {
-        var btn = $(this).button('loading');
+
         var data = new FormData();
+        var arg_d = $("input[name='arg_d']:checked").val();
+        var arg_m = $("input[name='arg_m']:checked").val();
+        if (arg_m === 'Weiser' && arg_d !== 'Bwd') {
+            $('#stdout').text('Weiser方法仅能使用后向切片');
+            return;
+        }
+        var btn = $(this).button('loading');
         jQuery.each(jQuery('#file')[0].files, function (i, file) {
             data.append('file-' + i, file);
         });
-        data.append('arg_d', $("input[name='arg_d']:checked").val());
-        data.append('arg_m', $("input[name='arg_m']:checked").val());
+        data.append('arg_d', arg_d);
+        data.append('arg_m', arg_m);
         $.ajax({
-            url: '{:url("Api/Phpapi/LLVMSlice_All")}',
+            url: '{:url("Api/Phpapi/slice_dispatcher")}',
             data: data,
             cache: false,
             contentType: false,
@@ -61,12 +68,14 @@
             type: 'POST',
             success: function (data) {
                 console.log(data);
-                btn.button('reset');
                 if (data.code == 0) {
-                    $('#stdout').html(data.data);
+                    $('#stdout').html(JSON.stringify(data.data));
                 } else {
                     alert('Error occurred, see console for details.');
                 }
+            },
+            complete: function () {
+                btn.button('reset');
             }
         });
     });
@@ -78,7 +87,7 @@
             data.append('file-' + i, file);
         });
         $.ajax({
-            url: '{:url("Api/Phpapi/CheckSyntax")}',
+            url: '{:url("Api/Phpapi/check_syntax")}',
             data: data,
             cache: false,
             contentType: false,
@@ -87,7 +96,10 @@
             success: function (data) {
                 console.log(data);
                 btn.button('reset');
-                $('#stdout').html(data.message);
+                $('#stdout').html(data.msg);
+            },
+            complete: function () {
+                btn.button('reset');
             }
         });
     });

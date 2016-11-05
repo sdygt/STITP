@@ -15,61 +15,76 @@ use think\Controller;
 
 class phpapi extends Controller
 {
-    public function CheckSyntax()
+    public function check_syntax()
     {
         $file = request()->file('file-0');
-
         if ($file) {
+            $hashid = substr($file->hash('md5'), 0, 8);
+            $path = "/tmp/stitp/{$hashid}";
             $info = $file->rule(function ($file) {
-                return substr($file->hash('md5'), 0, 8) . '_' . preg_replace('/\h+/', '_', $file->getInfo('name'));
-            })->move('/tmp' . DS . 'stitp');
+                return substr($file->hash('md5'), 0, 8) . '_' . preg_replace('/\h+/', '_',
+                    $file->getInfo('name'));
+            })->move($path);
             $pathname = $info->getPathname();
+            $filename = basename($pathname);
         } else {
-            return ['status' => false];
+            $this->result(null, 1, 'Upload Error');
         }
-
+        chdir($path);
         ob_start();
-        passthru('clang -fsyntax-only ' . '"' . $pathname . '"' . ' 2>&1', $ret);
+        passthru('clang -fsyntax-only ' . $filename . ' 2>&1', $ret);
         $stdout = ob_get_clean();
         if ($ret === 0) {
-            return ['status' => true, 'message' => 'Syntax check successful'];
+            $this->result(['filename' => $filename, 'hash' => $hashid], 0, 'Syntax check successful');
         } else {
-            return ['status' => true, 'message' => $stdout];
+            $this->result(['filename' => $filename, 'hash' => $hashid], 0, $stdout);
         }
     }
 
-    public function LLVMSlice_All()
+    public function slice_dispatcher()
     {
         $arg_m = input('post.arg_m');
         $arg_d = input('post.arg_d');
-
-        if ( !in_array($arg_d, ['Bwd', 'Fwd', 'Both'])) {
-            $arg_d = 'Bwd';
-        }
-        if ( !in_array($arg_m, ['Symbolic', 'Weiser', 'SDG', 'IFDS'])) {
-            $arg_m = 'Symbolic';
+        $arg_c = input('post.arg_c');
+        if ( !isset($arg_d) || !isset($arg_m)) {
+            $this->result(null, 2, 'Missing Argument');
         }
 
         $file = request()->file('file-0');
         if ($file) {
+            $hashid = substr($file->hash('md5'), 0, 8);
+            $path = "/tmp/stitp/{$hashid}";
             $info = $file->rule(function ($file) {
-                return substr($file->hash('md5'), 0, 8) . '_' . preg_replace('/\h+/', '_', $file->getInfo('name'));
-            })->move('/tmp' . DS . 'stitp');
+                return substr($file->hash('md5'), 0, 8) . '_' . preg_replace('/\h+/', '_',
+                    $file->getInfo('name'));
+            })->move($path);
             $pathname = $info->getPathname();
+            $filename = basename($pathname);
         } else {
-            return ['status' => false];
+            $this->result(null, 1, 'Upload Error');
         }
-        $cmdline = "llvm-slicing -m {$arg_m} -d {$arg_d} {$pathname} 2>&1";
-        ob_start();
-        echo time();
-        echo "{$arg_m} {$arg_d}" . PHP_EOL;
 
+        chdir($path);
+        if (isset($arg_c)) {
+            $cmdline = "llvm-slicing -m {$arg_m} -d {$arg_d} -c {$arg_c} {$filename} 2>&1";
+
+        } else {
+            $cmdline = "llvm-slicing -m {$arg_m} -d {$arg_d} {$filename} 2>&1";
+
+        }
+        ob_start();
         passthru($cmdline, $ret);
         $stdout = ob_get_clean();
-        $result_json = Parser::AllVarParser($stdout, $arg_d);
-        $this->result($result_json, $ret, 'success');
+
+        if (isset($arg_c)) {
+            $result = ['ir' => Parser::SingleVarParser($stdout, $arg_d)];
+        } else {
+            $result = ['table' => Parser::AllVarParser($stdout, $arg_d)];
+        }
+        $result += ['filename' => basename($info->getPathname()), 'hash' => $hashid];
+        $this->result($result, $ret, 'success');
+
 
     }
-
 
 }

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>首页|欢迎页</title>
+    <link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <script src="//cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
+    <script src="//cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+<div class="container">
+    <div class="jumbotron">
+        <div class="page-header">
+            <h2>在线程序切片系统
+                <small>大学生创新创业训练计划项目</small>
+            </h2>
+        </div>
+
+        <form id="form" enctype="multipart/form-data" role="form">
+            <p>切片方向</p>
+            <div class="btn-group" data-toggle="buttons">
+                <label class="btn btn-primary active"><input type="radio" name="arg_d" value="Bwd" checked>后向</label>
+                <label class="btn btn-primary"><input type="radio" name="arg_d" value="Fwd">前向</label>
+                <label class="btn btn-primary"><input type="radio" name="arg_d" value="Both">双向</label>
+            </div>
+            <p>切片方法</p>
+            <div class="btn-group" data-toggle="buttons">
+                <label class="btn btn-primary active"><input type="radio" name="arg_m" value="Symbolic" checked>Symbolic</label>
+                <label class="btn btn-primary"><input type="radio" name="arg_m" value="Weiser">Weiser</label>
+                <label class="btn btn-primary"><input type="radio" name="arg_m" value="SDG">SDG</label>
+                <label class="btn btn-primary"><input type="radio" name="arg_m" value="IFDS">IFDS</label>
+
+            </div>
+            <input type="file" id="file" name="sourcecode">
+        </form>
+        <div>
+            <pre id="stdout">选择文件并提交</pre>
+        </div>
+        <button id="btnSubmit" type="button" class="btn btn-primary" data-loading-text="正在处理">提交</button>
+        <button id="btnSynChk" type="button" class="btn btn-primary" data-loading-text="正在处理">代码语法检查</button>
+
+    </div>
+</div>
+<script>
+    $('#btnSubmit').click(function () {
+
+        var data = new FormData();
+        var arg_d = $("input[name='arg_d']:checked").val();
+        var arg_m = $("input[name='arg_m']:checked").val();
+        if (arg_m === 'Weiser' && arg_d !== 'Bwd') {
+            $('#stdout').text('Weiser方法仅能使用后向切片');
+            return;
+        }
+        var btn = $(this).button('loading');
+        jQuery.each(jQuery('#file')[0].files, function (i, file) {
+            data.append('file-' + i, file);
+        });
+        data.append('arg_d', arg_d);
+        data.append('arg_m', arg_m);
+        $.ajax({
+            url: '{:url("Api/Phpapi/slice_dispatcher")}',
+            data: data,
+            cache: false,
+            contentType: false,
+            processData: false,
+            type: 'POST',
+            success: function (data) {
+                console.log(data);
+                if (data.code == 0) {
+                    $('#stdout').html(JSON.stringify(data.data));
+                } else {
+                    alert('Error occurred, see console for details.');
+                }
+            },
+            complete: function () {
+                btn.button('reset');
+            }
+        });
+    });
+
+    $('#btnSynChk').click(function () {
+        var btn = $(this).button('loading');
+        var data = new FormData();
+        jQuery.each(jQuery('#file')[0].files, function (i, file) {
+            data.append('file-' + i, file);
+        });
+        $.ajax({
+            url: '{:url("Api/Phpapi/check_syntax")}',
+            data: data,
+            cache: false,
+            contentType: false,
+            processData: false,
+            type: 'POST',
+            success: function (data) {
+                console.log(data);
+                btn.button('reset');
+                $('#stdout').html(data.msg);
+            },
+            complete: function () {
+                btn.button('reset');
+            }
+        });
+    });
+</script>
+</body>
+
+</html>

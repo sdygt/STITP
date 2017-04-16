@@ -6,11 +6,10 @@
  * Time: 20:00
  */
 
-namespace app\api\controller\Parser;
+namespace app\api\model;
 
-use think\Controller;
 
-class Parser extends Controller
+class Parser
 {
     public static function AllVarParser($stdout, $arg_d)
     {
@@ -116,14 +115,14 @@ class Parser extends Controller
     {
         preg_match('/(?<=]:)(.*)(?=Its some statistic Info.:)/sm', $stdout, $ir);
         $ir = trim($ir[0]);
-        return $ir;
+        return ['IR' => $ir];
     }
 
     private static function SingleVarParser_2d($stdout)
     {
         preg_match('/(Backward)(.*)(?=Its some statistic Info.:)/sm', $stdout, $ir);
         $ir = trim($ir[0]);
-        return $ir;
+        return ['IR' => $ir];
     }
 
 

@@ -37,5 +37,5 @@ jspm_packages
 .node_repl_history
 
 .idea
-/.vscode/
-tp5/public/sandbox.php
+.vscode
+php/public/sandbox.php

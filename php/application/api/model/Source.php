@@ -62,7 +62,7 @@ class Source
         } else {
             $cmdline = "llvm-slicing -m {$this->arg['m']} -d {$this->arg['d']} {$this->filename} 2>&1";
         }
-        echo($cmdline);
+
         chdir($this->path);
         ob_start();
         passthru($cmdline, $this->ret);
@@ -74,6 +74,24 @@ class Source
             $this->slice_data = Parser::AllVarParser($this->stdout, $this->arg['d']);
         }
         return $this;
+    }
+
+
+    public function call_graph()
+    {
+        chdir($this->path);
+        $cmdline = "llvm-slicing -g Cg {$this->filename}";
+        ob_start();
+        passthru($cmdline, $this->ret);//Generates file "basename.dot"
+        $this->stdout = ob_get_clean();
+        $dot_file = basename($this->pathname, '.' . pathinfo($this->pathname, PATHINFO_EXTENSION)) . '_CG.dot';
+
+        ob_start();
+        passthru("dot -Tsvg {$dot_file}", $this->ret);
+        $this->stdout = ob_get_clean();
+
+        return $this;
+
     }
 
     /**

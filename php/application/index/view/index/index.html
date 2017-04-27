@@ -87,7 +87,7 @@
             data.append('file-' + i, file);
         });
         $.ajax({
-            url: '{:url("api/phpapi/check_syntax")}',
+            url: '{:url("api/phpapi/call_graph")}',
             data: data,
             cache: false,
             contentType: false,

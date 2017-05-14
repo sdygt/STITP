@@ -11,7 +11,7 @@ use think\Request;
 
 class phpapi extends Controller
 {
-    private $arg = ['m' => null, 'd' => null, 'c' => null];
+    private $arg = ['direction' => null, 'code' => null];
 
     public function __construct(Request $request = null)
     {
@@ -21,31 +21,33 @@ class phpapi extends Controller
 
     public function slice()
     {
-        $this->arg['m'] = input('post.arg_m');
-        $this->arg['d'] = input('post.arg_d');
-        $this->arg['c'] = input('post.arg_c');
+        $reqJson = json_decode(file_get_contents("php://input"), true);
+        $this->arg['direction'] = $reqJson['direction'];
+        $this->arg['code'] = $reqJson['code'];
+
 
         $validate = Loader::validate('Argument');
         if ( !$validate->check($this->arg)) {
             throw new InvalidSlicingArgumentException('Invalid Argument(s)');
         }
-        $file = new Source(request()->file('file-0'));
-
-        if ($file->checkSyntax()->getRet() !== 0) {
-            $this->result($file->getStdout(), $file->getRet(), 'Syntax Error');
+        $source = new Source($this->arg);
+        if ($source->checkSyntax()->getRet() !== 0) {
+            return json_encode(['error' => $source->getStdout(), '__hash__' => $source->getHash()]);
         }
 
-        $file->setArg($this->arg)->slice();
-        $this->result($file->getSliceData(), 0, 'Slice Success');
+
+        $source->slice();
+
+        return json_encode($source->getSliceData() + ['__hash__' => $source->getHash()]);
+
     }
 
     public function call_graph()
     {
-        $file = new Source(request()->file('file-0'));
+        $reqJson = json_decode(file_get_contents("php://input"), true);
+        $file = new Source(['code' => $reqJson, 'direction' => null]);
         $svg = $file->call_graph()->getStdout();
-        header("Content-Type: image/svg+xml;charset=utf-8");
-        echo $svg;
-        return;
+        return json_encode($svg);
     }
 
 }

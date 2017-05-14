@@ -8,42 +8,34 @@
 
 namespace app\api\model;
 
-use app\api\controller\Exception\UploadException;
-use think\File;
-
 class Source
 {
-    protected $pathname;
+    protected $tmppath = "/tmp/stitp";
     protected $path;
-    protected $filename;
     protected $hash;
-    private $file;
-    private $info;
     private $stdout;
     private $ret;
-    private $arg = ['m' => null, 'd' => null, 'c' => null];
+    private $direction;
     private $slice_data;
 
 
-    public function __construct(File $file)
+    public function __construct(Array $arg)
     {
-        $this->file = $file;
+        $this->code = $arg['code'];
+        $this->direction = $arg['direction'];
 
-        if ( !$file) {
-            throw new UploadException('Upload Error');
+
+        $this->hash = substr(md5($this->code), 0, 8);
+        $this->filename = $this->hash . '.c';
+        $this->path = "{$this->tmppath}/{$this->hash}";
+
+        if ( !is_dir($this->path)) {
+            mkdir($this->path, 0777, true);
         }
-
-        $this->hash = substr($this->file->hash(), 0, 8);
-        $this->path = "/tmp/stitp/{$this->hash}";
-
-        $this->info = $this->file->rule(function () { return $this->hash; })->move($this->path);
-
-        if ( !$this->info) {
-            throw new UploadException('Error when moving uploaded file');
-        }
-        $this->pathname = $this->info->getPathname();
-        $this->filename = pathinfo($this->pathname, PATHINFO_BASENAME);
-
+        chdir($this->path);
+        $fp = fopen($this->filename, 'w+b');
+        fwrite($fp, $this->code);
+        fclose($fp);
     }
 
     public function checkSyntax()
@@ -57,22 +49,13 @@ class Source
 
     public function slice()
     {
-        if (isset($this->arg['c'])) {
-            $cmdline = "llvm-slicing -m {$this->arg['m']} -d {$this->arg['d']} -c {$this->arg['c']} {$this->filename} 2>&1";
-        } else {
-            $cmdline = "llvm-slicing -m {$this->arg['m']} -d {$this->arg['d']} {$this->filename} 2>&1";
-        }
+        $cmdline = "llvm-slicing -m Symbolic -d {$this->direction} {$this->filename} 2>&1";
 
         chdir($this->path);
         ob_start();
         passthru($cmdline, $this->ret);
         $this->stdout = ob_get_clean();//Calling llvm-slicing done, start parse stdout below
-
-        if (isset($this->arg['c'])) {
-            $this->slice_data = Parser::SingleVarParser($this->stdout, $this->arg['d']);
-        } else {
-            $this->slice_data = Parser::AllVarParser($this->stdout, $this->arg['d']);
-        }
+        $this->slice_data = Parser::AllVarParser($this->stdout);
         return $this;
     }
 
@@ -84,8 +67,7 @@ class Source
         ob_start();
         passthru($cmdline, $this->ret);//Generates file "basename.dot"
         $this->stdout = ob_get_clean();
-        $dot_file = basename($this->pathname, '.' . pathinfo($this->pathname, PATHINFO_EXTENSION)) . '_CG.dot';
-
+        $dot_file = $this->hash . '_CG.dot';
         ob_start();
         passthru("dot -Tsvg {$dot_file}", $this->ret);
         $this->stdout = ob_get_clean();
@@ -127,6 +109,14 @@ class Source
     public function getSliceData()
     {
         return $this->slice_data;
+    }
+
+    /**
+     * @return bool|string
+     */
+    public function getHash()
+    {
+        return $this->hash;
     }
 
 }

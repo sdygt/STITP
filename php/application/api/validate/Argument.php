@@ -13,7 +13,7 @@ use think\Validate;
 class Argument extends Validate
 {
     protected $rule = [
-        'm' => 'require|in:Symbolic,Weiser,SDG,IFDS',
-        'd' => 'require|in:Bwd,Fwd,Both'
+        'direction' => 'require|in:Bwd,Fwd',
+        'code'      => 'require'
     ];
 }

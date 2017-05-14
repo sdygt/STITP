@@ -32,13 +32,13 @@ class phpapi extends Controller
         }
         $source = new Source($this->arg);
         if ($source->checkSyntax()->getRet() !== 0) {
-            return json_encode(['error' => $source->getStdout(), '__hash__' => $source->getHash()]);
+            return json_encode(['error' => $source->getStdout(), '__hash__' => $source->getHash().'.c']);
         }
 
 
         $source->slice();
 
-        return json_encode($source->getSliceData() + ['__hash__' => $source->getHash()]);
+        return json_encode($source->getSliceData() + ['__hash__' => $source->getHash().'.c']);
 
     }
 

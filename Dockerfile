@@ -16,16 +16,17 @@ COPY --from=fe-build /home/frontend/dist/index.html /var/www/html/application/in
 COPY --from=fe-build /home/frontend/dist/static/ /var/www/html/public/static/
 COPY apache2.conf /etc/apache2/
 
+RUN chown -R www-data:www-data /var/www/html && \
+    sed -i -e 's#DocumentRoot /var/www/html#DocumentRoot /var/www/html/public#g' /etc/apache2/sites-available/000-default.conf && \
+    sed -i -e 's#ErrorLog ${APACHE_LOG_DIR}/error.log#ErrorLog /dev/stderr#g' /etc/apache2/sites-available/000-default.conf && \
+    sed -i -e 's#CustomLog ${APACHE_LOG_DIR}/access.log combined#CustomLog /dev/stdout common#g' /etc/apache2/sites-available/000-default.conf && \
+    a2enmod rewrite
+
 RUN wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key|apt-key add - && \
     apt-get update && \
-    apt-get -y install clang-3.3 llvm-3.3 llvm-3.3-dev llvm-3.3-runtime graphviz &&\
+    apt-get -y install clang-3.3 llvm-3.3 llvm-3.3-dev llvm-3.3-runtime graphviz && \
     rm -rf /var/lib/apt/lists/* && \
     mv /usr/bin/opt-3.3 /usr/bin/opt
-
-
-RUN chown -R www-data:www-data /var/www/html && \
-    sed -i -e 's/DocumentRoot \/var\/www\/html/DocumentRoot \/var\/www\/html\/public/g' /etc/apache2/sites-available/000-default.conf && \
-    a2enmod rewrite
 
 WORKDIR /var/www/html
 EXPOSE 80
